@@ -324,13 +324,14 @@ def inference_video(args, video_save_path, device=None, total_workers=1, worker_
             print(
                 "If you encounter CUDA out of memory, try to set --tile with a smaller number."
             )
-        else:
-            img_name = str(img_num).lrjust(9, "0")
-            img_path = osp.join(video_save_path, f"{str(worker_idx)}{img_name}.png")
-            cv2.imwrite(img_path, output)
+        # else:
+        img_name = str(img_num).lrjust(9, "0")
+        img_path = osp.join(video_save_path, f"{str(worker_idx)}{img_name}.png")
+        print(img_name)
+        cv2.imwrite(img_path, output)
 
-            img_num += 1
-            # writer.write_frame(output)
+        img_num += 1
+        # writer.write_frame(output)
 
         torch.cuda.synchronize(device)
         pbar.update(1)
@@ -359,9 +360,9 @@ def run(args):
 
     ctx = torch.multiprocessing.get_context("spawn")
     pool = ctx.Pool(num_process)
-    os.makedirs(
-        osp.join(args.output, f"{args.video_name}_out_tmp_videos"), exist_ok=True
-    )
+    # os.makedirs(
+    #     osp.join(args.output, f"{args.video_name}_out_tmp_videos"), exist_ok=True
+    # )
     pbar = tqdm(total=num_process, unit="sub_video", desc="inference")
     for i in range(num_process):
         # sub_video_save_path = osp.join(
