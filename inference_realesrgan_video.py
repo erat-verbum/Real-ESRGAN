@@ -300,10 +300,10 @@ def inference_video(args, video_save_path, device=None, total_workers=1, worker_
         face_enhancer = None
 
     reader = Reader(args, total_workers, worker_idx)
-    audio = reader.get_audio()
-    height, width = reader.get_resolution()
-    fps = reader.get_fps()
-    writer = Writer(args, audio, height, width, video_save_path, fps)
+    # audio = reader.get_audio()
+    # height, width = reader.get_resolution()
+    # fps = reader.get_fps()
+    # writer = Writer(args, audio, height, width, video_save_path, fps)
 
     pbar = tqdm(total=len(reader), unit="frame", desc="inference")
     img_num = 0
@@ -336,7 +336,7 @@ def inference_video(args, video_save_path, device=None, total_workers=1, worker_
         pbar.update(1)
 
     reader.close()
-    writer.close()
+    # writer.close()
 
 
 def run(args):
@@ -413,9 +413,9 @@ def run(args):
     #     subprocess.call(cmd)
     #     os.remove(f"{args.output}/{args.video_name}_vidlist.txt")
 
-    shutil.rmtree(osp.join(args.output, f"{args.video_name}_out_tmp_videos"))
-    if osp.exists(osp.join(args.output, f"{args.video_name}_inp_tmp_videos")):
-        shutil.rmtree(osp.join(args.output, f"{args.video_name}_inp_tmp_videos"))
+    # shutil.rmtree(osp.join(args.output, f"{args.video_name}_out_tmp_videos"))
+    # if osp.exists(osp.join(args.output, f"{args.video_name}_inp_tmp_videos")):
+    #     shutil.rmtree(osp.join(args.output, f"{args.video_name}_inp_tmp_videos"))
 
 
 def main():
