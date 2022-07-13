@@ -371,7 +371,7 @@ def run(args):
             inference_video,
             args=(
                 args,
-                sub_video_save_path,
+                args.output,
                 torch.device(i % num_gpus),
                 num_process,
                 i,
