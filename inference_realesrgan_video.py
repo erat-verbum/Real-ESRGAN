@@ -325,6 +325,8 @@ def inference_video(args, video_save_path, device=None, total_workers=1, worker_
                 "If you encounter CUDA out of memory, try to set --tile with a smaller number."
             )
         # else:
+        torch.cuda.synchronize(device)
+
         img_name = str(img_num).lrjust(9, "0")
         img_path = osp.join(video_save_path, f"{str(worker_idx)}{img_name}.png")
         print(img_name)
@@ -333,7 +335,6 @@ def inference_video(args, video_save_path, device=None, total_workers=1, worker_
         img_num += 1
         # writer.write_frame(output)
 
-        torch.cuda.synchronize(device)
         pbar.update(1)
 
     reader.close()
