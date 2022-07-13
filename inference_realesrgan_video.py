@@ -326,8 +326,8 @@ def inference_video(args, video_save_path, device=None, total_workers=1, worker_
             )
         else:
             img_name = str(img_num).lrjust(9, "0")
-            save_path = osp.join(video_save_path, f"{str(worker_idx)}{img_name}.png")
-            cv2.imwrite(save_path, output)
+            img_path = osp.join(video_save_path, f"{str(worker_idx)}{img_name}.png")
+            cv2.imwrite(img_path, output)
 
             img_num += 1
             # writer.write_frame(output)
@@ -341,7 +341,7 @@ def inference_video(args, video_save_path, device=None, total_workers=1, worker_
 
 def run(args):
     args.video_name = osp.splitext(os.path.basename(args.input))[0]
-    video_save_path = osp.join(args.output, f"{args.video_name}_{args.suffix}.mp4")
+    # video_save_path = osp.join(args.output, f"{args.video_name}_{args.suffix}.mp4")
 
     if args.extract_frame_first:
         tmp_frames_folder = osp.join(args.output, f"{args.video_name}_inp_tmp_frames")
@@ -354,7 +354,7 @@ def run(args):
     num_gpus = torch.cuda.device_count()
     num_process = num_gpus * args.num_process_per_gpu
     if num_process == 1:
-        inference_video(args, video_save_path)
+        inference_video(args, args.output)
         return
 
     ctx = torch.multiprocessing.get_context("spawn")
@@ -364,9 +364,9 @@ def run(args):
     )
     pbar = tqdm(total=num_process, unit="sub_video", desc="inference")
     for i in range(num_process):
-        sub_video_save_path = osp.join(
-            args.output, f"{args.video_name}_out_tmp_videos", f"{i:03d}.mp4"
-        )
+        # sub_video_save_path = osp.join(
+        #     args.output, f"{args.video_name}_out_tmp_videos", f"{i:03d}.mp4"
+        # )
         pool.apply_async(
             inference_video,
             args=(
@@ -380,10 +380,10 @@ def run(args):
         )
     pool.close()
     pool.join()
-    shutil.move(
-        osp.join(args.output, f"{args.video_name}_out_tmp_videos"),
-        f"{video_save_path}",
-    )
+    # shutil.move(
+    #     osp.join(args.output, f"{args.video_name}_out_tmp_videos"),
+    #     f"{video_save_path}",
+    # )
 
     # if args.frames:
     #     shutil.move(
