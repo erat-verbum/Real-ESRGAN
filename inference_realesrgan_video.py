@@ -300,12 +300,13 @@ def inference_video(args, video_save_path, device=None, total_workers=1, worker_
         face_enhancer = None
 
     reader = Reader(args, total_workers, worker_idx)
-    audio = reader.get_audio()
-    height, width = reader.get_resolution()
-    fps = reader.get_fps()
-    writer = Writer(args, audio, height, width, video_save_path, fps)
+    # audio = reader.get_audio()
+    # height, width = reader.get_resolution()
+    # fps = reader.get_fps()
+    # writer = Writer(args, audio, height, width, video_save_path, fps)
 
     pbar = tqdm(total=len(reader), unit="frame", desc="inference")
+    img_num = 0
     while True:
         img = reader.get_frame()
         if img is None:
@@ -323,19 +324,26 @@ def inference_video(args, video_save_path, device=None, total_workers=1, worker_
             print(
                 "If you encounter CUDA out of memory, try to set --tile with a smaller number."
             )
-        else:
-            writer.write_frame(output)
-
+        # else:
         torch.cuda.synchronize(device)
+
+        img_name = str(img_num).rjust(9, "0")
+        img_path = osp.join(video_save_path, f"{str(worker_idx)}{img_name}.png")
+        print(img_name)
+        cv2.imwrite(img_path, output)
+
+        img_num += 1
+        # writer.write_frame(output)
+
         pbar.update(1)
 
     reader.close()
-    writer.close()
+    # writer.close()
 
 
 def run(args):
     args.video_name = osp.splitext(os.path.basename(args.input))[0]
-    video_save_path = osp.join(args.output, f"{args.video_name}_{args.suffix}.mp4")
+    # video_save_path = osp.join(args.output, f"{args.video_name}_{args.suffix}.mp4")
 
     if args.extract_frame_first:
         tmp_frames_folder = osp.join(args.output, f"{args.video_name}_inp_tmp_frames")
@@ -348,24 +356,24 @@ def run(args):
     num_gpus = torch.cuda.device_count()
     num_process = num_gpus * args.num_process_per_gpu
     if num_process == 1:
-        inference_video(args, video_save_path)
+        inference_video(args, args.output)
         return
 
     ctx = torch.multiprocessing.get_context("spawn")
     pool = ctx.Pool(num_process)
-    os.makedirs(
-        osp.join(args.output, f"{args.video_name}_out_tmp_videos"), exist_ok=True
-    )
+    # os.makedirs(
+    #     osp.join(args.output, f"{args.video_name}_out_tmp_videos"), exist_ok=True
+    # )
     pbar = tqdm(total=num_process, unit="sub_video", desc="inference")
     for i in range(num_process):
-        sub_video_save_path = osp.join(
-            args.output, f"{args.video_name}_out_tmp_videos", f"{i:03d}.mp4"
-        )
+        # sub_video_save_path = osp.join(
+        #     args.output, f"{args.video_name}_out_tmp_videos", f"{i:03d}.mp4"
+        # )
         pool.apply_async(
             inference_video,
             args=(
                 args,
-                sub_video_save_path,
+                args.output,
                 torch.device(i % num_gpus),
                 num_process,
                 i,
@@ -374,38 +382,42 @@ def run(args):
         )
     pool.close()
     pool.join()
+    # shutil.move(
+    #     osp.join(args.output, f"{args.video_name}_out_tmp_videos"),
+    #     f"{video_save_path}",
+    # )
 
-    if args.frames:
-        shutil.move(
-            osp.join(args.output, f"{args.video_name}_out_tmp_videos"),
-            f"{video_save_path}",
-        )
-    else:
-        # combine sub videos
-        # prepare vidlist.txt
-        with open(f"{args.output}/{args.video_name}_vidlist.txt", "w") as f:
-            for i in range(num_process):
-                f.write(f"file '{args.video_name}_out_tmp_videos/{i:03d}.mp4'\n")
+    # if args.frames:
+    #     shutil.move(
+    #         osp.join(args.output, f"{args.video_name}_out_tmp_videos"),
+    #         f"{video_save_path}",
+    #     )
+    # else:
+    #     # combine sub videos
+    #     # prepare vidlist.txt
+    #     with open(f"{args.output}/{args.video_name}_vidlist.txt", "w") as f:
+    #         for i in range(num_process):
+    #             f.write(f"file '{args.video_name}_out_tmp_videos/{i:03d}.mp4'\n")
 
-        cmd = [
-            args.ffmpeg_bin,
-            "-f",
-            "concat",
-            "-safe",
-            "0",
-            "-i",
-            f"{args.output}/{args.video_name}_vidlist.txt",
-            "-c",
-            "copy",
-            f"{video_save_path}",
-        ]
-        print(" ".join(cmd))
-        subprocess.call(cmd)
-        os.remove(f"{args.output}/{args.video_name}_vidlist.txt")
+    #     cmd = [
+    #         args.ffmpeg_bin,
+    #         "-f",
+    #         "concat",
+    #         "-safe",
+    #         "0",
+    #         "-i",
+    #         f"{args.output}/{args.video_name}_vidlist.txt",
+    #         "-c",
+    #         "copy",
+    #         f"{video_save_path}",
+    #     ]
+    #     print(" ".join(cmd))
+    #     subprocess.call(cmd)
+    #     os.remove(f"{args.output}/{args.video_name}_vidlist.txt")
 
-    shutil.rmtree(osp.join(args.output, f"{args.video_name}_out_tmp_videos"))
-    if osp.exists(osp.join(args.output, f"{args.video_name}_inp_tmp_videos")):
-        shutil.rmtree(osp.join(args.output, f"{args.video_name}_inp_tmp_videos"))
+    # shutil.rmtree(osp.join(args.output, f"{args.video_name}_out_tmp_videos"))
+    # if osp.exists(osp.join(args.output, f"{args.video_name}_inp_tmp_videos")):
+    #     shutil.rmtree(osp.join(args.output, f"{args.video_name}_inp_tmp_videos"))
 
 
 def main():
