@@ -327,7 +327,7 @@ def inference_video(args, video_save_path, device=None, total_workers=1, worker_
         # else:
         torch.cuda.synchronize(device)
 
-        img_name = str(img_num).lrjust(9, "0")
+        img_name = str(img_num).ljust(9, "0")
         img_path = osp.join(video_save_path, f"{str(worker_idx)}{img_name}.png")
         print(img_name)
         cv2.imwrite(img_path, output)
